@@ -1,0 +1,1 @@
+"""GameScope backend application package."""
