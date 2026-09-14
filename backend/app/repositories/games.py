@@ -196,16 +196,27 @@ class GameRepository:
                 await self._get_or_create_platform(name) for name in game.platforms
             ]
         if game.ratings or not preserve_existing:
-            record.ratings.clear()
-            record.ratings.extend(
-                GameRatingRecord(
-                    source=rating.source,
-                    score=rating.score,
-                    max_score=rating.max_score,
-                    rating_count=rating.rating_count,
-                )
-                for rating in game.ratings
-            )
+            incoming_ratings = {rating.source: rating for rating in game.ratings}
+            existing_ratings = {rating.source: rating for rating in record.ratings}
+            for source, rating in incoming_ratings.items():
+                existing = existing_ratings.pop(source, None)
+                if existing is None:
+                    record.ratings.append(
+                        GameRatingRecord(
+                            source=source,
+                            score=rating.score,
+                            max_score=rating.max_score,
+                            rating_count=rating.rating_count,
+                        )
+                    )
+                    continue
+                existing.score = rating.score
+                existing.max_score = rating.max_score
+                existing.rating_count = rating.rating_count
+
+            if not preserve_existing:
+                for obsolete_rating in existing_ratings.values():
+                    record.ratings.remove(obsolete_rating)
         await self._session.flush()
         return await self.get_by_id(record.id)  # type: ignore[return-value]
 
