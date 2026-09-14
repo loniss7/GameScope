@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +11,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    rawg_api_key: SecretStr | None = None
+    rawg_api_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("RAWG_API_KEY", "GAMESCOPE_RAWG_API_KEY"),
+    )
     database_url: str | None = None
     openai_api_key: SecretStr | None = None
 

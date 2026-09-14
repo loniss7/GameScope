@@ -30,8 +30,22 @@ def test_environment_variables_override_env_file(monkeypatch) -> None:
     assert settings.openai_api_key == SecretStr("openai-from-environment")
 
 
+def test_legacy_gamescope_rawg_key_name_is_supported(monkeypatch) -> None:
+    monkeypatch.delenv("RAWG_API_KEY", raising=False)
+    monkeypatch.setenv("GAMESCOPE_RAWG_API_KEY", "legacy-rawg-key")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.rawg_api_key == SecretStr("legacy-rawg-key")
+
+
 def test_settings_are_optional_when_values_are_not_provided(monkeypatch) -> None:
-    for name in ("RAWG_API_KEY", "DATABASE_URL", "OPENAI_API_KEY"):
+    for name in (
+        "RAWG_API_KEY",
+        "GAMESCOPE_RAWG_API_KEY",
+        "DATABASE_URL",
+        "OPENAI_API_KEY",
+    ):
         monkeypatch.delenv(name, raising=False)
 
     settings = Settings(_env_file=None)
