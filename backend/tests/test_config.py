@@ -51,5 +51,16 @@ def test_settings_are_optional_when_values_are_not_provided(monkeypatch) -> None
     settings = Settings(_env_file=None)
 
     assert settings.rawg_api_key is None
-    assert settings.database_url is None
+    assert settings.database_url == "sqlite+aiosqlite:///./gamescope.db"
     assert settings.openai_api_key is None
+
+
+def test_legacy_database_url_name_is_supported(monkeypatch) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv(
+        "GAMESCOPE_DATABASE_URL", "postgresql+asyncpg://localhost/gamescope"
+    )
+
+    settings = Settings(_env_file=None)
+
+    assert settings.database_url == "postgresql+asyncpg://localhost/gamescope"

@@ -1,5 +1,5 @@
 """External game data provider contracts and implementations."""
 
-from app.providers.base import GameProvider
+from app.providers.base import GameProvider, GameProviderError
 
-__all__ = ["GameProvider"]
+__all__ = ["GameProvider", "GameProviderError"]

@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -18,6 +19,33 @@ class GameRating(BaseModel):
         return self
 
 
+class GamePrice(BaseModel):
+    amount: Decimal = Field(ge=0)
+    currency: str = Field(min_length=1, max_length=8)
+    discount_percent: int = Field(default=0, ge=0, le=100)
+
+
+class GameSystemRequirements(BaseModel):
+    minimum: str | None = None
+    recommended: str | None = None
+
+
+class GameReview(BaseModel):
+    source: str = Field(min_length=1)
+    author: str | None = None
+    language: str | None = None
+    text: str
+    voted_up: bool
+    created_at: date | None = None
+    playtime_minutes: int | None = Field(default=None, ge=0)
+
+
+class GameReviewsResponse(BaseModel):
+    items: list[GameReview] = Field(default_factory=list)
+    total: int = Field(default=0, ge=0)
+    source: str
+
+
 class Game(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -29,7 +57,12 @@ class Game(BaseModel):
     developers: list[str] = Field(default_factory=list)
     publishers: list[str] = Field(default_factory=list)
     genres: list[str] = Field(default_factory=list)
+    categories: list[str] = Field(default_factory=list)
     platforms: list[str] = Field(default_factory=list)
     ratings: list[GameRating] = Field(default_factory=list)
+    price: GamePrice | None = None
+    is_free: bool | None = None
+    achievement_count: int | None = Field(default=None, ge=0)
+    system_requirements: GameSystemRequirements | None = None
     image_url: str | None = None
     external_ids: dict[str, str] = Field(default_factory=dict)

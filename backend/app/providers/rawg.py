@@ -8,7 +8,7 @@ from urllib.parse import quote
 import httpx
 from pydantic import SecretStr, ValidationError
 
-from app.providers.base import GameProvider
+from app.providers.base import GameProvider, GameProviderError
 from app.schemas import Game, GameRating
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ RAWG_PAGE_SIZE = 20
 RAWG_RATING_MAX = 5.0
 
 
-class RawgProviderError(RuntimeError):
+class RawgProviderError(GameProviderError):
     """A sanitized error raised for RAWG network or response failures."""
 
 
@@ -86,7 +86,11 @@ def map_rawg_game(payload: dict[str, Any]) -> Game:
     rating = payload.get("rating")
     if _is_number(rating):
         ratings_count = payload.get("ratings_count")
-        if not isinstance(ratings_count, int) or isinstance(ratings_count, bool) or ratings_count < 0:
+        if (
+            not isinstance(ratings_count, int)
+            or isinstance(ratings_count, bool)
+            or ratings_count < 0
+        ):
             ratings_count = None
         ratings.append(
             GameRating(
@@ -106,7 +110,9 @@ def map_rawg_game(payload: dict[str, Any]) -> Game:
     try:
         return Game(
             title=title,
-            description=_plain_text(payload.get("description_raw") or payload.get("description")),
+            description=_plain_text(
+                payload.get("description_raw") or payload.get("description")
+            ),
             release_date=_parse_date(payload.get("released")),
             developers=_names(payload.get("developers")),
             publishers=_names(payload.get("publishers")),
@@ -139,7 +145,9 @@ class RawgProvider(GameProvider):
     ) -> None:
         key = api_key.get_secret_value() if isinstance(api_key, SecretStr) else api_key
         if not isinstance(key, str) or not key.strip():
-            raise ValueError("RAWG_API_KEY must be configured before using RawgProvider.")
+            raise ValueError(
+                "RAWG_API_KEY must be configured before using RawgProvider."
+            )
 
         self._api_key = key.strip()
         self._client = httpx.AsyncClient(
@@ -203,7 +211,9 @@ class RawgProvider(GameProvider):
                 params={"key": self._api_key, **(params or {})},
             )
         except httpx.RequestError:
-            raise RawgProviderError("Could not complete the RAWG API request.") from None
+            raise RawgProviderError(
+                "Could not complete the RAWG API request."
+            ) from None
 
         if response.status_code == 404 and not_found_is_empty:
             return None
