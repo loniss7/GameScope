@@ -64,3 +64,38 @@ def test_legacy_database_url_name_is_supported(monkeypatch) -> None:
     settings = Settings(_env_file=None)
 
     assert settings.database_url == "postgresql+asyncpg://localhost/gamescope"
+
+
+def test_steam_api_key_aliases_are_supported(monkeypatch) -> None:
+    monkeypatch.delenv("STEAM_API_KEY", raising=False)
+    monkeypatch.setenv("GAMESCOPE_STEAM_API_KEY", "steam-key")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.steam_api_key == SecretStr("steam-key")
+
+
+def test_ai_settings_have_ollama_defaults() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.ai_provider == "ollama"
+    assert settings.ollama_base_url == "http://127.0.0.1:11434"
+    assert settings.ollama_model == "qwen3:8b"
+    assert settings.ai_timeout_seconds == 300
+    assert settings.ai_max_reviews == 10
+    assert settings.ai_max_review_chars == 1000
+    assert settings.ai_max_prompt_chars == 12000
+    assert settings.ollama_num_ctx == 4096
+    assert settings.ollama_max_tokens == 512
+
+
+def test_igdb_settings_have_safe_disabled_defaults() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.igdb_enabled is False
+    assert settings.igdb_client_id is None
+    assert settings.igdb_client_secret is None
+    assert settings.igdb_base_url == "https://api.igdb.com/v4"
+    assert settings.igdb_auth_url == "https://id.twitch.tv/oauth2/token"
+    assert settings.igdb_rate_limit_per_second == 4
+    assert settings.igdb_max_concurrency == 8

@@ -1,3 +1,3 @@
-from app.services.game_service import GameService
+from app.services.game_service import GameService, SummaryUnavailableError
 
-__all__ = ["GameService"]
+__all__ = ["GameService", "SummaryUnavailableError"]

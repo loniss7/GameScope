@@ -5,11 +5,13 @@ from app.db.models.game import (
     GenreRecord,
     PlatformRecord,
 )
+from app.db.models.summary import GameSummaryRecord
 
 __all__ = [
     "ExternalGameId",
     "GameRatingRecord",
     "GameRecord",
+    "GameSummaryRecord",
     "GenreRecord",
     "PlatformRecord",
 ]

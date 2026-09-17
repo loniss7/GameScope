@@ -8,11 +8,12 @@ from typing import Any
 from urllib.parse import quote
 
 import httpx
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from app.providers.base import GameProvider, GameProviderError
 from app.schemas import (
     Game,
+    GameAchievement,
     GamePrice,
     GameRating,
     GameReview,
@@ -22,11 +23,16 @@ from app.schemas import (
 logger = logging.getLogger(__name__)
 
 STEAM_STORE_BASE_URL = "https://store.steampowered.com/"
+STEAM_WEB_API_BASE_URL = "https://api.steampowered.com/"
 STEAM_POSITIVE_RATING_MAX = 100.0
 
 
 class SteamProviderError(GameProviderError):
     """A sanitized error raised for Steam network or response failures."""
+
+
+class SteamApiNotConfiguredError(SteamProviderError):
+    """Raised when an endpoint requiring a Steam Web API key is called without one."""
 
 
 class _TextParser(HTMLParser):
@@ -87,6 +93,60 @@ def _system_requirements(value: Any) -> GameSystemRequirements | None:
     if minimum is None and recommended is None:
         return None
     return GameSystemRequirements(minimum=minimum, recommended=recommended)
+
+
+def map_steam_achievements(payload: dict[str, Any]) -> list[GameAchievement]:
+    """Map ISteamUserStats/GetSchemaForGame into normalized achievements."""
+    game_payload = payload.get("game")
+    if not isinstance(game_payload, dict):
+        raise SteamProviderError("Steam returned invalid achievement data.")
+
+    stats_payload = game_payload.get("availableGameStats")
+    if not isinstance(stats_payload, dict):
+        return []
+    raw_achievements = stats_payload.get("achievements")
+    if not isinstance(raw_achievements, list):
+        return []
+
+    achievements: list[GameAchievement] = []
+    for item in raw_achievements:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("name")
+        display_name = item.get("displayName")
+        if not isinstance(name, str) or not name.strip():
+            continue
+        if not isinstance(display_name, str) or not display_name.strip():
+            display_name = name
+
+        hidden_value = item.get("hidden", False)
+        if isinstance(hidden_value, bool):
+            hidden = hidden_value
+        elif isinstance(hidden_value, int):
+            hidden = hidden_value != 0
+        else:
+            hidden = False
+
+        achievements.append(
+            GameAchievement(
+                name=name.strip(),
+                display_name=display_name.strip(),
+                description=_plain_text(item.get("description")),
+                icon_url=(
+                    item.get("icon")
+                    if isinstance(item.get("icon"), str) and item.get("icon").strip()
+                    else None
+                ),
+                icon_gray_url=(
+                    item.get("icongray")
+                    if isinstance(item.get("icongray"), str)
+                    and item.get("icongray").strip()
+                    else None
+                ),
+                hidden=hidden,
+            )
+        )
+    return achievements
 
 
 def map_steam_game(app_id: str, payload: dict[str, Any]) -> Game:
@@ -176,19 +236,29 @@ def map_steam_game(app_id: str, payload: dict[str, Any]) -> Game:
 
 
 class SteamProvider(GameProvider):
-    """Steam Store adapter. Steam's public store endpoints do not require a key."""
+    """Steam Store and Web API adapter."""
 
     name = "steam"
 
     def __init__(
         self,
         *,
+        api_key: SecretStr | str | None = None,
         base_url: str = STEAM_STORE_BASE_URL,
+        api_base_url: str = STEAM_WEB_API_BASE_URL,
         timeout_seconds: float = 10.0,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
+        key = api_key.get_secret_value() if isinstance(api_key, SecretStr) else api_key
+        self._api_key = key.strip() if isinstance(key, str) and key.strip() else None
         self._client = httpx.AsyncClient(
             base_url=f"{base_url.rstrip('/')}/",
+            timeout=timeout_seconds,
+            transport=transport,
+            headers={"User-Agent": "GameScope/0.1"},
+        )
+        self._api_client = httpx.AsyncClient(
+            base_url=f"{api_base_url.rstrip('/')}/",
             timeout=timeout_seconds,
             transport=transport,
             headers={"User-Agent": "GameScope/0.1"},
@@ -335,8 +405,25 @@ class SteamProvider(GameProvider):
             )
         return reviews, total
 
+    async def get_achievements(self, external_id: str) -> list[GameAchievement]:
+        """Return the public achievement schema for a Steam app."""
+        app_id = external_id.strip()
+        if not app_id.isdigit():
+            return []
+        if self._api_key is None:
+            raise SteamApiNotConfiguredError(
+                "Steam Web API key is not configured for achievements."
+            )
+
+        payload = await self._get_web_json(
+            "ISteamUserStats/GetSchemaForGame/v2/",
+            params={"key": self._api_key, "appid": app_id, "l": "en"},
+        )
+        return map_steam_achievements(payload)
+
     async def aclose(self) -> None:
         await self._client.aclose()
+        await self._api_client.aclose()
 
     async def _get_reviews_payload(self, app_id: str, *, limit: int) -> dict[str, Any]:
         return await self._get_json(
@@ -348,6 +435,27 @@ class SteamProvider(GameProvider):
                 "purchase_type": "all",
             },
         )
+
+    async def _get_web_json(
+        self, path: str, *, params: dict[str, str | int]
+    ) -> dict[str, Any]:
+        try:
+            response = await self._api_client.get(path, params=params)
+        except httpx.RequestError:
+            raise SteamProviderError(
+                "Could not complete the Steam Web API request."
+            ) from None
+        if not 200 <= response.status_code < 300:
+            raise SteamProviderError(
+                f"Steam Web API returned HTTP {response.status_code}."
+            )
+        try:
+            payload = response.json()
+        except ValueError:
+            raise SteamProviderError("Steam Web API returned invalid JSON.") from None
+        if not isinstance(payload, dict):
+            raise SteamProviderError("Steam Web API returned an invalid response body.")
+        return payload
 
     async def _get_json(
         self, path: str, *, params: dict[str, str | int]

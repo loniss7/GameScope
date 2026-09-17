@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.base import AiProvider
 from app.services import GameService
 
 
@@ -32,6 +33,7 @@ def get_game_service(
 ) -> GameService:
     aggregator = getattr(request.app.state, "game_aggregator", None)
     steam_provider = getattr(request.app.state, "steam_provider", None)
+    ai_provider: AiProvider | None = getattr(request.app.state, "ai_provider", None)
     settings = getattr(request.app.state, "settings", None)
     if aggregator is None or steam_provider is None or settings is None:
         raise HTTPException(
@@ -45,5 +47,9 @@ def get_game_service(
         session,
         aggregator,
         steam_provider,
+        ai_provider=ai_provider,
+        ai_max_reviews=settings.ai_max_reviews,
+        ai_max_review_chars=settings.ai_max_review_chars,
+        ai_max_prompt_chars=settings.ai_max_prompt_chars,
         cache_ttl_seconds=settings.cache_ttl_seconds,
     )
