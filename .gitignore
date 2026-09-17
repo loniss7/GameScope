@@ -1,23 +1,59 @@
-# Python
-__pycache__/
-*.py[cod]
-
-# PyCharm
-.idea/
-
-# Environment
+# Secrets and local environment files
 .env
 .env.*
+!.env.example
+!.env.*.example
 
-# Virtual environments
+# Python bytecode and environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
 .venv/
 venv/
 env/
+ENV/
+__pypackages__/
 
-# Tests
+# Python test, lint, type-check, and build artifacts
 .pytest_cache/
+pytest-cache-files-*/
+backend/pytest-cache-files-*/
 .coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
 
-# OS
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# Node.js and Vite artifacts
+node_modules/
+.pnpm-store/
+.vite/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# IDE settings
+.idea/
+
+# Operating system and temporary files
 .DS_Store
 Thumbs.db
+Desktop.ini
+*.log
+*.tmp
+*.swp
