@@ -43,7 +43,6 @@ export default function ReviewsPage() {
         </div>
         {data && <Badge variant="light" color="gray" radius="xl">{formatCount(data.total)} всего в {formatSource(data.source)}</Badge>}
       </Group>
-      <Text className="reviews-intro">Живые впечатления тех, кто уже провёл время в этой игре.</Text>
 
       {reviewsQuery.isLoading && (
         <Stack gap="md" mt="xl">
@@ -99,11 +98,10 @@ export default function ReviewsPage() {
             </Group>
           )}
           <Text className="review-limit-note">Загружено {data.items.length} из {formatCount(data.total)} отзывов</Text>
-
-          {/* Reserved, empty mount point for later AI review analytics. */}
-          <AiAnalysisSlot />
         </>
       )}
+
+      {id && <AiAnalysisSlot key={id} gameId={id} />}
     </Container>
   );
 }

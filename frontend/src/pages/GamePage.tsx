@@ -19,6 +19,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getGame } from '../api/games';
 import { formatDate, formatMoney } from '../format';
 import ApiErrorAlert from '../components/ApiErrorAlert';
+import AchievementsSection from '../components/AchievementsSection';
 import GameCover from '../components/GameCover';
 import RatingPanel from '../components/RatingPanel';
 
@@ -162,6 +163,8 @@ export default function GamePage() {
                 </Stack>
               )}
             </div>
+
+            {game.id && <AchievementsSection id={game.id} fallbackTotal={game.achievement_count} />}
 
             {reviewPath ? (
               <Paper className="reviews-cta" radius="lg" withBorder>

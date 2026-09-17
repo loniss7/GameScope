@@ -167,7 +167,43 @@ a { color: inherit; text-decoration: none; }
 .reviews-empty-title { margin-block: 12px 6px; color: #e1eaee; font-size: 15px; font-weight: 700; }
 .reviews-empty .muted-copy { max-width: 450px; }
 .review-limit-note { margin-top: 20px; color: #63727d; font-size: 10px; text-align: center; }
-.ai-analysis-slot { min-height: 150px; margin-top: 33px; border: 1px dashed rgba(104, 130, 145, 0.18); border-radius: 16px; background: linear-gradient(135deg,rgba(13,19,26,0.32),rgba(10,14,19,0.16)); }
+
+.achievements-section { margin-top: 4px; }
+.achievements-section .mantine-Accordion-item { overflow: hidden; border: 1px solid var(--border); background: linear-gradient(145deg,rgba(16,23,31,0.92),rgba(12,17,23,0.92)); }
+.achievements-section .mantine-Accordion-control { padding: 13px 16px; color: #e4edf0; }
+.achievements-section .mantine-Accordion-control:hover { background: rgba(92,225,230,0.04); }
+.achievements-section .mantine-Accordion-panel { border-top: 1px solid rgba(151,177,197,0.09); }
+.achievements-section .mantine-Accordion-content { padding: 16px; }
+.achievement-list { width: 100%; }
+.achievement-row { display: flex; align-items: flex-start; gap: 12px; min-height: 78px; padding: 12px; border-color: rgba(151,177,197,0.1); background: rgba(255,255,255,0.018); }
+.achievement-icon { flex: 0 0 auto; border: 1px solid rgba(151,177,197,0.14); }
+.achievement-copy { min-width: 0; flex: 1; }
+.achievement-name { color: #dce7eb; font-size: 12px; font-weight: 650; line-height: 1.4; }
+.achievement-description { margin-top: 4px; color: #82929d; font-size: 11px; line-height: 1.5; }
+
+.ai-analysis-panel { margin-top: 33px; padding: 23px; border-color: rgba(92,225,230,0.16); background: linear-gradient(145deg,rgba(16,31,37,0.82),rgba(11,17,24,0.94)); }
+.ai-analysis-icon { display: grid; flex: 0 0 auto; width: 42px; height: 42px; place-items: center; color: var(--cyan); border: 1px solid rgba(92,225,230,0.2); border-radius: 13px; background: rgba(92,225,230,0.08); }
+.ai-analysis-empty { display: flex; flex-direction: column; align-items: center; padding: 23px 16px 10px; text-align: center; color: rgba(92,225,230,0.74); }
+.ai-empty-title { margin-top: 10px; color: #dce9ed; font-size: 15px; font-weight: 700; }
+.ai-analysis-empty .muted-copy { max-width: 540px; margin-top: 5px; }
+.ai-summary-copy { color: #b8c8cf; font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
+.ai-points { padding: 14px 16px; border-radius: 11px; }
+.ai-points-positive { border: 1px solid rgba(169,239,112,0.16); background: rgba(169,239,112,0.045); }
+.ai-points-negative { border: 1px solid rgba(240,140,137,0.16); background: rgba(240,140,137,0.045); }
+.ai-points-title { margin-bottom: 9px; color: #dce7eb; font-size: 11px; font-weight: 750; letter-spacing: 0.03em; }
+.ai-point { position: relative; padding-left: 15px; color: #a7b7be; font-size: 12px; line-height: 1.55; }
+.ai-point::before { position: absolute; content: ""; top: 0.62em; left: 1px; width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); }
+.ai-points-negative .ai-point::before { background: #f08c89; }
+.sentiment-block { padding-top: 2px; }
+.sentiment-legend { color: #82929d; font-size: 10px; }
+.sentiment-legend p { display: flex; align-items: center; gap: 5px; }
+.sentiment-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+.sentiment-dot-positive { background: #5fd1ab; }
+.sentiment-dot-neutral { background: #969fa5; }
+.sentiment-dot-negative { background: #e07a7a; }
+.ai-meta { align-items: center; }
+.ai-meta .mantine-Badge-root { text-transform: none; font-size: 9px; }
+.ai-generation-state { justify-content: center; min-height: 80px; }
 
 .not-found-page { display: grid; min-height: calc(100vh - 200px); place-items: center; text-align: center; }
 .not-found-code { color: var(--cyan); font-size: 14px; font-weight: 800; letter-spacing: 0.22em; }
@@ -206,7 +242,8 @@ a { color: inherit; text-decoration: none; }
   .rating-panel { min-height: 104px; }
   .description-panel, .review-card { padding: 17px; }
   .review-meta { width: 100%; padding-left: 48px; }
-  .ai-analysis-slot { min-height: 125px; margin-top: 26px; }
+  .ai-analysis-panel { margin-top: 26px; padding: 18px; }
+  .sentiment-legend { gap: 8px; }
   .footer-note { width: 100%; }
 }
 

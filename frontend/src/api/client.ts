@@ -6,24 +6,27 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly code?: string,
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-function getDetail(payload: unknown): string | undefined {
+function getDetail(payload: unknown): { message?: string; code?: string } {
   if (!payload || typeof payload !== 'object' || !('detail' in payload)) {
-    return undefined;
+    return {};
   }
 
   const detail = payload.detail;
-  if (typeof detail === 'string') return detail;
-  if (detail && typeof detail === 'object' && 'message' in detail) {
-    return typeof detail.message === 'string' ? detail.message : undefined;
+  if (typeof detail === 'string') return { message: detail };
+  if (detail && typeof detail === 'object') {
+    const message = 'message' in detail && typeof detail.message === 'string' ? detail.message : undefined;
+    const code = 'code' in detail && typeof detail.code === 'string' ? detail.code : undefined;
+    return { message, code };
   }
 
-  return undefined;
+  return {};
 }
 
 export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
@@ -47,7 +50,36 @@ export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> 
   }
 
   if (!response.ok) {
-    throw new ApiError(getDetail(payload) ?? `HTTP ${response.status}`, response.status);
+    const detail = getDetail(payload);
+    throw new ApiError(detail.message ?? `HTTP ${response.status}`, response.status, detail.code);
+  }
+
+  return payload as T;
+}
+
+export async function apiPost<T>(path: string, signal?: AbortSignal): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    throw new ApiError('Не удалось связаться с GameScope API.', 0);
+  }
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = undefined;
+  }
+
+  if (!response.ok) {
+    const detail = getDetail(payload);
+    throw new ApiError(detail.message ?? `HTTP ${response.status}`, response.status, detail.code);
   }
 
   return payload as T;
@@ -55,6 +87,17 @@ export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> 
 
 export function getApiErrorMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return 'Произошла непредвиденная ошибка. Попробуйте ещё раз.';
+
+  switch (error.code) {
+    case 'steam_api_key_missing':
+      return 'Steam-данные временно недоступны: на backend не настроен ключ Steam API.';
+    case 'summary_unavailable':
+      return 'AI-анализ недоступен: для этой игры нет Steam ID или отзывов.';
+    case 'ai_provider_error':
+      return 'AI-провайдер вернул ошибку. Попробуйте повторить запрос позже.';
+    case 'ai_provider_unavailable':
+      return 'AI-провайдер временно недоступен. Попробуйте повторить запрос позже.';
+  }
 
   switch (error.status) {
     case 0:

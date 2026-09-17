@@ -7,6 +7,8 @@ const ratingColors: Record<string, string> = {
   steam: 'teal.4',
   rawg: 'cyan.4',
   metacritic: 'lime.4',
+  igdb: 'violet.4',
+  igdb_critics: 'orange.4',
 };
 
 export default function RatingPanel({ rating }: { rating: GameRating }) {

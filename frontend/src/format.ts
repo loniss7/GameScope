@@ -1,11 +1,24 @@
 export function formatDate(value: string | null): string | null {
   if (!value) return null;
-  const date = new Date(`${value}T00:00:00`);
+  const date = new Date(value.length <= 10 ? `${value}T00:00:00` : value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('ru-RU', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+  }).format(date);
+}
+
+export function formatDateTime(value: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(date);
 }
 
@@ -40,6 +53,8 @@ export function formatSource(source: string): string {
     rawg: 'RAWG',
     steam: 'Steam',
     metacritic: 'Metacritic',
+    igdb: 'IGDB',
+    igdb_critics: 'IGDB Critics',
   };
   return known[source.toLowerCase()] ?? source;
 }

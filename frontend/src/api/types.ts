@@ -32,6 +32,38 @@ export type GameReviewsResponse = {
   source: string;
 };
 
+export type GameAchievement = {
+  name: string;
+  display_name: string;
+  description: string | null;
+  icon_url: string | null;
+  icon_gray_url: string | null;
+  hidden: boolean;
+};
+
+export type GameAchievementsResponse = {
+  items: GameAchievement[];
+  total: number;
+  source: string;
+};
+
+export type GameSummary = {
+  summary: string;
+  pros: string[];
+  cons: string[];
+  sentiment: {
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
+  reviews_analyzed: number;
+  reviews_total: number;
+  model: string;
+  source: string;
+  language: string;
+  generated_at: string | null;
+};
+
 export type Game = {
   id: string | null;
   title: string;
