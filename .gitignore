@@ -8,13 +8,17 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
 .venv/
 venv/
 env/
 ENV/
+__pypackages__/
 
 # Python test, lint, type-check, and build artifacts
 .pytest_cache/
+pytest-cache-files-*/
+backend/pytest-cache-files-*/
 .coverage
 .coverage.*
 htmlcov/
@@ -30,6 +34,8 @@ pip-wheel-metadata/
 *.db
 *.sqlite
 *.sqlite3
+*.sqlite-shm
+*.sqlite-wal
 
 # Node.js and Vite artifacts
 node_modules/
