@@ -46,6 +46,21 @@ class GameReviewsResponse(BaseModel):
     source: str
 
 
+class GameAchievement(BaseModel):
+    name: str = Field(min_length=1)
+    display_name: str = Field(min_length=1)
+    description: str | None = None
+    icon_url: str | None = None
+    icon_gray_url: str | None = None
+    hidden: bool = False
+
+
+class GameAchievementsResponse(BaseModel):
+    items: list[GameAchievement] = Field(default_factory=list)
+    total: int = Field(default=0, ge=0)
+    source: str
+
+
 class Game(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 

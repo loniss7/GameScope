@@ -3,8 +3,14 @@ from datetime import date
 
 import httpx
 import pytest
+from pydantic import SecretStr
 
-from app.providers.steam import SteamProvider, SteamProviderError, map_steam_game
+from app.providers.steam import (
+    SteamApiNotConfiguredError,
+    SteamProvider,
+    SteamProviderError,
+    map_steam_game,
+)
 
 
 def test_steam_mapper_normalizes_game_details() -> None:
@@ -124,6 +130,73 @@ def test_steam_http_error_is_sanitized() -> None:
         try:
             with pytest.raises(SteamProviderError, match="HTTP 503"):
                 await provider.search("Example")
+        finally:
+            await provider.aclose()
+
+    asyncio.run(exercise())
+
+
+def test_steam_achievement_schema_uses_web_api_key() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(
+            200,
+            json={
+                "game": {
+                    "gameName": "Example Game",
+                    "availableGameStats": {
+                        "achievements": [
+                            {
+                                "name": "WIN_ONE",
+                                "displayName": "First victory",
+                                "description": "<p>Win once.</p>",
+                                "icon": "https://example.test/achievement.jpg",
+                                "icongray": "https://example.test/achievement-gray.jpg",
+                                "hidden": 0,
+                            },
+                            {
+                                "name": "HIDDEN_ONE",
+                                "displayName": "Hidden victory",
+                                "hidden": 1,
+                            },
+                        ]
+                    },
+                }
+            },
+        )
+
+    async def exercise():
+        provider = SteamProvider(
+            api_key=SecretStr("test-key"),
+            transport=httpx.MockTransport(handler),
+        )
+        try:
+            return await provider.get_achievements("42")
+        finally:
+            await provider.aclose()
+
+    achievements = asyncio.run(exercise())
+    assert len(achievements) == 2
+    assert achievements[0].display_name == "First victory"
+    assert achievements[0].description == "Win once."
+    assert achievements[0].hidden is False
+    assert achievements[1].hidden is True
+    assert len(seen) == 1
+    assert seen[0].url.path.endswith("ISteamUserStats/GetSchemaForGame/v2/")
+    assert seen[0].url.params["key"] == "test-key"
+    assert seen[0].url.params["appid"] == "42"
+
+
+def test_steam_achievements_require_web_api_key() -> None:
+    async def exercise() -> None:
+        provider = SteamProvider(
+            transport=httpx.MockTransport(lambda _: httpx.Response(200))
+        )
+        try:
+            with pytest.raises(SteamApiNotConfiguredError, match="not configured"):
+                await provider.get_achievements("42")
         finally:
             await provider.aclose()
 

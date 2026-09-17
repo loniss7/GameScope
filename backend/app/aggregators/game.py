@@ -48,7 +48,7 @@ def merge_games(primary: Game, secondary: Game) -> Game:
 
 
 class GameAggregator:
-    """Combines the primary RAWG record with confidently matched Steam data."""
+    """Combine the primary RAWG record with confidently matched providers."""
 
     def __init__(
         self,
@@ -60,7 +60,7 @@ class GameAggregator:
 
     async def search(self, query: str) -> list[Game]:
         # Keep search light: enrich a selected game on its detail request instead of
-        # issuing a second provider request for every search result.
+        # issuing requests to every provider for every search result.
         return await self._primary.search(query)
 
     async def get_game(self, external_id: str) -> Game | None:
